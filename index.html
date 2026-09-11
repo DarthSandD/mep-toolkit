@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="MEP Building Services Toolkit — live HVAC, electrical, plumbing, voltage-drop, lighting and ventilation sizing calculators that run 100% in your browser.">
+<title>MEP Building Services Toolkit — Interactive</title>
+<style>
+:root{
+  --tabtop:60px;
+  --bg:#f3f6fb;--bg2:#e8eef7;
+  --navy:#0e2140;--navy2:#16406e;
+  --card:rgba(255,255,255,.82);--card-solid:#ffffff;
+  --line:#d7e1f0;--line-soft:#e6ecf5;
+  --yellow:#f2b705;--yellow2:#ffd54d;--yellow-soft:#fff6dd;--yellow-line:#ecd27a;
+  --text:#0e2140;--muted:#5c6d89;--good:#0a7a3d;--danger:#c62f3b;
+  --r:18px;--shadow:0 14px 40px rgba(14,33,64,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--tabtop) + 76px)}
+body{font-family:'Segoe UI',system-ui,-apple-system,Roboto,'Helvetica Neue',sans-serif;
+  background:linear-gradient(180deg,#fbfcfe 0%,var(--bg) 30%,var(--bg2) 100%);
+  color:var(--text);line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
+/* ---------- sticky mini-nav ---------- */
+nav.top{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:.9rem;
+  padding:.65rem 1.1rem;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);box-shadow:0 2px 14px rgba(14,33,64,.06)}
+nav.top .brand{font-weight:800;font-size:.92rem;letter-spacing:.02em;white-space:nowrap;color:var(--navy)}
+nav.top .brand b{color:#c89400}
+nav.top .links{margin-left:auto;display:flex;gap:.35rem;flex-wrap:wrap}
+nav.top .links a{color:var(--muted);text-decoration:none;font-size:.8rem;font-weight:600;padding:.35rem .7rem;border-radius:999px;border:1px solid transparent}
+nav.top .links a:hover,.nav.top .links a.on{color:var(--navy);border-color:var(--yellow-line);background:var(--yellow-soft)}
+/* ---------- tool filter tabs (sticky under nav; offset set by JS) ---------- */
+.tabs{position:sticky;top:var(--tabtop);z-index:59;display:flex;gap:.45rem;justify-content:center;flex-wrap:wrap;
+  padding:.55rem 1rem;background:rgba(243,246,251,.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line-soft)}
+.tabs button{font:inherit;font-size:.78rem;padding:.42rem .95rem;border-radius:999px;background:#fff;color:var(--muted);
+  border:1px solid var(--line);font-weight:700;cursor:pointer}
+.tabs button:hover{color:var(--navy);border-color:var(--yellow);box-shadow:0 2px 10px rgba(242,183,5,.25)}
+.tabs button.on{background:var(--yellow);color:#231a00;border-color:var(--yellow);box-shadow:0 4px 14px rgba(242,183,5,.4)}
+/* ---------- hero : navy gradient band + glow (the flair) ---------- */
+header.hero{position:relative;overflow:hidden;text-align:center;padding:4rem 1.2rem 3.2rem;color:#eef3ff;
+  background:linear-gradient(160deg,#0a1a38 5%,#14305e 52%,#0a1a38 95%);border-bottom:4px solid var(--yellow)}
+header.hero::before{content:"";position:absolute;inset:-40% -20% auto -20%;height:120%;
+  background:radial-gradient(520px 300px at 50% 0%,rgba(255,196,0,.30),transparent 65%),
+             radial-gradient(700px 380px at 85% 20%,rgba(64,120,255,.30),transparent 60%),
+             radial-gradient(600px 340px at 12% 25%,rgba(0,220,255,.18),transparent 60%);
+  pointer-events:none}
+header.hero::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+  background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(620px 420px at 50% 0%,#000 30%,transparent 75%);
+  mask-image:radial-gradient(620px 420px at 50% 0%,#000 30%,transparent 75%)}
+header.hero>*{position:relative;z-index:1}
+.badge{display:inline-flex;align-items:center;gap:.45rem;background:var(--yellow);color:#231a00;font-weight:800;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;padding:.32rem .95rem;border-radius:999px;margin-bottom:1.1rem;box-shadow:0 6px 24px rgba(255,196,0,.45)}
+header.hero h1{font-size:clamp(2rem,5.4vw,3.3rem);line-height:1.08;font-weight:900;letter-spacing:-.02em;margin-bottom:.7rem;color:#fff}
+header.hero h1 span{color:var(--yellow2);text-shadow:0 0 34px rgba(255,196,0,.55)}
+header.hero p.sub{color:#b9c6de;max-width:640px;margin:0 auto 1.4rem;font-size:clamp(.92rem,2.4vw,1.05rem)}
+.chips{display:flex;gap:.55rem;justify-content:center;flex-wrap:wrap}
+.chip{font-size:.78rem;font-weight:700;color:#eef3ff;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);
+  padding:.42rem .9rem;border-radius:999px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-variant-numeric:tabular-nums}
+.chip b{color:var(--yellow2)}
+.cta-row{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem}
+a.cta{display:inline-block;text-decoration:none;font-weight:800;font-size:.88rem;padding:.65rem 1.4rem;border-radius:12px;background:var(--yellow);color:#231a00;box-shadow:0 8px 26px rgba(255,196,0,.35);transition:transform .12s ease,box-shadow .12s ease}
+a.cta:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(255,196,0,.5)}
+a.cta.ghost{background:transparent;color:var(--yellow2);border:2px solid var(--yellow);box-shadow:none}
+/* ---------- layout ---------- */
+main{max-width:980px;margin:0 auto;padding:2rem 1rem 3.5rem}
+/* ---------- light glass cards ---------- */
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:1.6rem;margin-bottom:1.4rem;box-shadow:var(--shadow);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);overflow:hidden}
+.card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,var(--yellow),#ff9d00 45%,var(--yellow2));opacity:.95}
+.card-head{display:flex;align-items:flex-start;gap:.9rem;margin-bottom:.4rem}
+.step{flex:0 0 auto;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:1.35rem;
+  background:linear-gradient(145deg,rgba(242,183,5,.28),rgba(242,183,5,.08));border:1px solid var(--yellow-line);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+.card h2{color:var(--navy);font-size:1.25rem;letter-spacing:-.01em}
+.card h2 .n{color:#c89400;font-weight:900;margin-right:.35rem}
+.card p.desc{color:var(--muted);font-size:.89rem;margin:.15rem 0 1.1rem}
+.tag{align-self:flex-start;margin-left:auto;flex:0 0 auto;font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:#7a5c00;border:1px solid var(--yellow-line);padding:.28rem .7rem;border-radius:999px;background:var(--yellow-soft);white-space:nowrap}
+/* ---------- form grid ---------- */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.1rem}
+.field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:.3rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.field input,.field select{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:.6rem .7rem;font-size:1rem;transition:border-color .12s,box-shadow .12s}
+.field input:hover,.field select:hover{border-color:#a9bcd8}
+.field input:focus,.field select:focus{outline:none;border-color:var(--yellow);box-shadow:0 0 0 3px rgba(242,183,5,.28)}
+/* range sliders synced to numeric inputs */
+input.sl{-webkit-appearance:none;appearance:none;width:100%;height:26px;margin-top:.3rem;background:transparent;cursor:pointer;padding:0;border:none;display:block}
+input.sl::-webkit-slider-runnable-track{height:6px;border-radius:999px;background:linear-gradient(90deg,var(--yellow) var(--fill,50%),#dbe4f0 var(--fill,50%))}
+input.sl::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;margin-top:-6px;border-radius:50%;background:#fff;border:3px solid var(--yellow);box-shadow:0 1px 6px rgba(14,33,64,.3)}
+input.sl::-moz-range-track{height:6px;border-radius:999px;background:#dbe4f0}
+input.sl::-moz-range-progress{height:6px;border-radius:999px;background:var(--yellow)}
+input.sl::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--yellow);box-shadow:0 1px 6px rgba(14,33,64,.3)}
+/* ---------- results ---------- */
+.results{background:#f8fbff;border:1px solid var(--line);border-radius:12px;padding:.9rem 1.05rem;font-size:.9rem}
+.results .hl{color:var(--navy);font-weight:700}
+.results .row{display:flex;justify-content:space-between;gap:.75rem;padding:.22rem 0;border-bottom:1px dashed var(--line)}
+.results .row:last-child{border-bottom:none}
+.results .row b{color:var(--navy);font-variant-numeric:tabular-nums;text-align:right}
+.results .pass{color:var(--good);font-weight:800}
+.results .fail{color:var(--danger);font-weight:800}
+/* ---------- schedule table ---------- */
+.tbl-wrap{overflow-x:auto;margin:.4rem -0.3rem 0;padding:0 .3rem}
+table.sched{width:100%;min-width:640px;border-collapse:collapse;font-size:.82rem;margin:.6rem 0}
+table.sched th{color:#7a5c00;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;padding:.4rem .45rem;border-bottom:2px solid var(--line);white-space:nowrap}
+table.sched td{padding:.32rem .45rem;border-bottom:1px solid var(--line-soft);font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--text)}
+table.sched tr:hover td{background:rgba(242,183,5,.07)}
+table.sched input{background:#fff;border:1px solid var(--line);border-radius:7px;color:var(--text);padding:.34rem .45rem;width:100%;font-size:.85rem;min-width:90px}
+table.sched input:focus{outline:none;border-color:var(--yellow);box-shadow:0 0 0 3px rgba(242,183,5,.25)}
+table.sched input.num{max-width:90px}
+table.sched input.sl{min-width:110px;padding:0;border:none;background:transparent}
+/* ---------- buttons ---------- */
+.btnrow{display:flex;flex-wrap:wrap;gap:.55rem;margin:.7rem 0}
+button{font:inherit;background:var(--yellow);color:#231a00;border:none;font-weight:800;padding:.55rem 1.1rem;border-radius:10px;cursor:pointer;font-size:.86rem;transition:transform .1s,box-shadow .12s,background .12s}
+button:hover{box-shadow:0 6px 20px rgba(242,183,5,.45)}
+button.ghost{background:transparent;color:#7a5c00;border:2px solid var(--yellow)}
+button.danger{background:transparent;color:var(--danger);border:1px solid var(--danger);padding:.3rem .6rem;font-size:.78rem}
+button:active{transform:scale(.96)}
+.formula{font-size:.75rem;color:var(--muted);margin-top:.7rem;border-left:3px solid var(--yellow);padding-left:.65rem}
+.warn{font-size:.78rem;color:var(--muted);margin-top:.5rem}
+/* ---------- scroll reveal (filter-safe: hidden cards are unobserved, shown cards forced visible) ---------- */
+.rv{opacity:0;transform:translateY(16px)}
+.rv.vis{opacity:1;transform:none;transition:opacity .5s ease,transform .5s ease}
+.card.hide{display:none}
+/* ---------- footer ---------- */
+footer.site{border-top:1px solid var(--line);background:#fff;text-align:center;color:var(--muted);padding:1.8rem 1rem 2.6rem;font-size:.82rem}
+footer.site .py{font-size:.78rem;margin-top:.4rem}
+footer.site a{color:#8a6800;text-decoration:none;font-weight:600}
+footer.site a:hover{text-decoration:underline}
+@media(max-width:560px){
+  nav.top .brand{font-size:.8rem}
+  nav.top .links a{font-size:.72rem;padding:.3rem .55rem}
+  header.hero{padding:3rem 1rem 2.4rem}
+  .card{padding:1.15rem}
+  .card-head{gap:.65rem}.step{width:40px;height:40px;font-size:1.15rem}
+  .tag{display:none}
+  table.sched{font-size:.75rem}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}.rv{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<nav class="top" aria-label="Section">
+  <div class="brand">⚙️ MEP <b>Toolkit</b></div>
+  <div class="links">
+    <a href="#hvac-card">❄️ HVAC</a>
+    <a href="#elec-card">⚡ Electrical</a>
+    <a href="#plumb-card">🚰 Plumbing</a>
+    <a href="#vd-card">🔌 Volt-drop</a>
+    <a href="#lux-card">💡 Lighting</a>
+    <a href="#vent-card">🌀 Ventilation</a>
+  </div>
+</nav>
+<div class="tabs" role="tablist" aria-label="Filter tools">
+  <button type="button" data-f="all" class="on">All 6</button>
+  <button type="button" data-f="air">❄️🌀 Air</button>
+  <button type="button" data-f="power">⚡🔌 Power</button>
+  <button type="button" data-f="water">🚰 Water</button>
+  <button type="button" data-f="light">💡 Light</button>
+</div>
+<header class="hero">
+  <div class="badge">⚙️ Interactive — runs 100% in your browser</div>
+  <h1>MEP Building Services <span>Toolkit</span></h1>
+  <p class="sub">HVAC, electrical, plumbing, voltage-drop, lighting &amp; ventilation sizing calculators. Type or slide values — results update live. No installs, works offline.</p>
+  <div class="chips">
+    <span class="chip"><b data-count="6">6</b> live calculators</span>
+    <span class="chip"><b data-count="0">0</b> dependencies</span>
+    <span class="chip"><b data-count="100" data-suffix="%">100%</b> offline file://</span>
+  </div>
+  <div class="cta-row">
+    <a class="cta" href="#hvac-card">Start sizing ↓</a>
+    <a class="cta ghost" href="#elec-card">Load schedule</a>
+  </div>
+</header>
+<main>
+
+<section class="card" id="hvac-card" data-cat="air">
+  <div class="card-head">
+    <div class="step" aria-hidden="true">❄️</div>
+    <div><h2><span class="n">01</span>HVAC Cooling Load + Duct</h2>
+    <p class="desc">Envelope + occupants + lighting, +10% safety. Airflow Q = P / (1.2 × 1005 × 10).</p></div>
+    <span class="tag">Thermal</span>
+  </div>
+  <div class="grid2">
+    <div class="field"><label>Floor area (m²)</label><input id="h-area" type="number" min="0" value="50" step="any"></div>
+    <div class="field"><label>Occupants</label><input id="h-occ" type="number" min="0" value="8" step="1"></div>
+    <div class="field"><label>Lighting (W)</label><input id="h-light" type="number" min="0" value="600" step="any"></div>
+  </div>
+  <div class="results" id="hvac-out" aria-live="polite"></div>
+  <div class="formula">Factors: 120 W/m² envelope · 130 W/person · 1.0× lighting · 10% safety · ΔT 10 K · 1 W = 3.412 BTU/hr · 1 ton = 3517 W</div>
+</section>
+
+<section class="card" id="elec-card" data-cat="power">
+  <div class="card-head">
+    <div class="step" aria-hidden="true">⚡</div>
+    <div><h2><span class="n">02</span>Electrical Load Schedule + Cable / Breaker</h2>
+    <p class="desc">Edit load names + kW, add / remove rows. Demand factor auto-matched from name.</p></div>
+    <span class="tag">Power</span>
+  </div>
+  <div class="grid2">
+    <div class="field"><label>Voltage (V)</label><input id="e-volt" type="number" min="1" value="400" step="any"></div>
+    <div class="field"><label>Phases</label><select id="e-ph"><option value="3" selected>3-phase</option><option value="1">1-phase</option></select></div>
+    <div class="field"><label>Power factor</label><input id="e-pf" type="number" min="0.1" max="1" value="0.85" step="0.01"></div>
+  </div>
+  <div class="tbl-wrap"><table class="sched"><thead><tr><th>Load</th><th>kW</th><th>DF</th><th>Dem kW</th><th>Amps</th><th>Cable Cu</th><th>Breaker</th><th></th></tr></thead>
+  <tbody id="e-rows"></tbody></table></div>
+  <div class="btnrow"><button id="e-add">+ Add row</button></div>
+  <div class="results" id="elec-out" aria-live="polite"></div>
+  <div class="formula">3-ph I = P / (√3·V·pf) · 1-ph I = P / (V·pf). DF: lighting .9, hvac 1, sockets/receptacle .5, elevator/lift .75, pump .8, fire 1, it/server .85, kitchen .65, other .8.</div>
+</section>
+
+<section class="card" id="plumb-card" data-cat="water">
+  <div class="card-head">
+    <div class="step" aria-hidden="true">🚰</div>
+    <div><h2><span class="n">03</span>Plumbing Demand + Pipe + Pump Head</h2>
+    <p class="desc">Fixture units → demand via Hunter-curve interpolation, pipe by velocity limit, head via Hazen-Williams.</p></div>
+    <span class="tag">Water</span>
+  </div>
+  <div class="grid2">
+    <div class="field"><label>Fixture units (WSFU)</label><input id="p-fu" type="number" min="0" value="80" step="any"></div>
+    <div class="field"><label>System</label><select id="p-sys"><option value="tank" selected>Flush-tank</option><option value="valve">Flush-valve</option></select></div>
+    <div class="field"><label>Static head (m)</label><input id="p-static" type="number" min="0" value="10" step="any"></div>
+    <div class="field"><label>Pipe length (m)</label><input id="p-len" type="number" min="0" value="50" step="any"></div>
+  </div>
+  <div class="results" id="plumb-out" aria-live="polite"></div>
+  <div class="formula">Vmax 1.8 m/s · C=140 · Leq = L×1.3 · residual 10 m · pump η 65%. Rough sizing — verify vs local code (IPC/UPC).</div>
+</section>
+
+<section class="card" id="vd-card" data-cat="power">
+  <div class="card-head">
+    <div class="step" aria-hidden="true">🔌</div>
+    <div><h2><span class="n">04</span>Voltage Drop Check</h2>
+    <p class="desc">Copper cable impedance check — drop vs your % limit, PASS / FAIL verdict.</p></div>
+    <span class="tag">Power</span>
+  </div>
+  <div class="grid2">
+    <div class="field"><label>Load current (A)</label><input id="v-i" type="number" min="0" value="182.5" step="any"></div>
+    <div class="field"><label>Cable size (mm² Cu)</label><input id="v-a" type="number" min="1" value="95" step="any"></div>
+    <div class="field"><label>One-way length (m)</label><input id="v-len" type="number" min="0" value="60" step="any"></div>
+    <div class="field"><label>System</label><select id="v-sys"><option value="3" selected>3-phase</option><option value="1">1-phase</option></select></div>
+    <div class="field"><label>Voltage (V)</label><input id="v-volt" type="number" min="1" value="400" step="any"></div>
+    <div class="field"><label>Power factor</label><input id="v-pf" type="number" min="0.1" max="1" value="0.85" step="0.01"></div>
+    <div class="field"><label>Limit (%)</label><input id="v-lim" type="number" min="0.5" value="5" step="any"></div>
+  </div>
+  <div class="results" id="vd-out" aria-live="polite"></div>
+  <div class="formula">Cu R = 0.0225·L/A Ω · X = 0.00008·L Ω · 3ph ΔV = √3·I·(R·pf + X·sin φ) · 1ph ΔV = 2·I·(R·pf + X·sin φ) · % = ΔV/V·100</div>
+</section>
+
+<section class="card" id="lux-card" data-cat="light">
+  <div class="card-head">
+    <div class="step" aria-hidden="true">💡</div>
+    <div><h2><span class="n">05</span>Lighting Lux → Luminaires</h2>
+    <p class="desc">Lumen method — fittings needed for target lux, with near-square rows × cols layout.</p></div>
+    <span class="tag">Lighting</span>
+  </div>
+  <div class="grid2">
+    <div class="field"><label>Room length (m)</label><input id="l-L" type="number" min="0" value="20" step="any"></div>
+    <div class="field"><label>Room width (m)</label><input id="l-W" type="number" min="0" value="10" step="any"></div>
+    <div class="field"><label>Target (lux)</label><input id="l-lux" type="number" min="0" value="300" step="any"></div>
+    <div class="field"><label>Luminaire (lm)</label><input id="l-lm" type="number" min="1" value="3600" step="any"></div>
+    <div class="field"><label>Utilisation factor</label><input id="l-uf" type="number" min="0.05" max="1" value="0.6" step="0.01"></div>
+    <div class="field"><label>Maintenance factor</label><input id="l-mf" type="number" min="0.05" max="1" value="0.8" step="0.01"></div>
+  </div>
+  <div class="results" id="lux-out" aria-live="polite"></div>
+  <div class="formula">N = ceil(lux·area / (lm·UF·MF)) · E<sub>actual</sub> = N·lm·UF·MF / area · layout ≈ square, columns along room length</div>
+</section>
+
+<section class="card" id="vent-card" data-cat="air">
+  <div class="card-head">
+    <div class="step" aria-hidden="true">🌀</div>
+    <div><h2><span class="n">06</span>Ventilation ACH + Fresh Air</h2>
+    <p class="desc">Room ACH airflow vs per-person fresh air (10 L/s/person) — design takes the larger.</p></div>
+    <span class="tag">Air</span>
+  </div>
+  <div class="grid2">
+    <div class="field"><label>Length (m)</label><input id="n-L" type="number" min="0" value="20" step="any"></div>
+    <div class="field"><label>Width (m)</label><input id="n-W" type="number" min="0" value="10" step="any"></div>
+    <div class="field"><label>Height (m)</label><input id="n-H" type="number" min="0" value="3" step="any"></div>
+    <div class="field"><label>ACH target</label><input id="n-ach" type="number" min="0" value="6" step="any"></div>
+    <div class="field"><label>Occupancy (persons)</label><input id="n-occ" type="number" min="0" value="20" step="1"></div>
+  </div>
+  <div class="results" id="vent-out" aria-live="polite"></div>
+  <div class="formula">Q<sub>ACH</sub> = V·ACH/3600 · Q<sub>person</sub> = occ·10/1000 m³/s · design = max · 1 m³/s = 2118.88 CFM · 10 L/s/person</div>
+</section>
+
+</main>
+<footer class="site">
+  Rough sizing aids — verify against local code before design use.<br>
+  <span class="py">Prefer Python? <a href="mep_hvac.py" download>mep_hvac.py</a> · <a href="mep_electrical.py" download>mep_electrical.py</a> · <a href="mep_plumbing.py" download>mep_plumbing.py</a></span>
+</footer>
+<script>
+"use strict";
+// ---------- HVAC ----------
+var DUCT_TABLE=[[0.05,150],[0.10,200],[0.20,250],[0.35,300],[0.50,350],[0.75,400],[1.00,450],[1.50,500],[2.00,550],[3.00,600],[Infinity,650]];
+function num(id,fb){var v=parseFloat(document.getElementById(id).value);return (isNaN(v)||v<0)?fb:v;}
+function calcHVAC(){
+  var a=num('h-area',0),o=parseInt(document.getElementById('h-occ').value)||0,l=num('h-light',0);
+  var env=a*120,peo=o*130,tot=(env+peo+l)*1.10;
+  var kw=tot/1000,btu=tot*3.412,tons=tot/3517;
+  var q=tot/(1.2*1005*10),cfm=q*2118.88;
+  var dia=650;for(var i=0;i<DUCT_TABLE.length;i++){if(q<=DUCT_TABLE[i][0]){dia=DUCT_TABLE[i][1];break;}}
+  var area=Math.PI*Math.pow(dia/2000,2),vel=area?q/area:0;
+  document.getElementById('hvac-out').innerHTML=
+    row('Envelope ('+a+' m² × 120)',env.toFixed(1)+' W')+
+    row('Occupants ('+o+' × 130)',peo.toFixed(1)+' W')+
+    row('Lighting',l.toFixed(1)+' W')+
+    row('<span class="hl">Total cooling (+10%)</span>','<b>'+tot.toFixed(1)+' W · '+kw.toFixed(2)+' kW · '+Math.round(btu)+' BTU/hr · '+tons.toFixed(2)+' tons</b>')+
+    row('Airflow','<b>'+q.toFixed(3)+' m³/s ('+Math.round(cfm)+' CFM)</b>')+
+    row('Round duct','<b>'+dia+' mm dia @ '+vel.toFixed(1)+' m/s</b>');
+}
+function row(k,v){return '<div class="row"><span>'+k+'</span><span>'+v+'</span></div>';}
+
+// ---------- Electrical ----------
+var CABLE_TABLE=[[0,1.5,10],[15.5,2.5,20],[21,4,25],[28,6,32],[36,10,40],[50,16,63],[66,25,80],[84,35,100],[104,50,125],[125,70,160],[160,95,200],[200,120,250],[245,150,315],[300,185,400],[350,240,500]];
+var DF_RULES=[['lighting',.9],['hvac',1],['socket',.5],['receptacle',.5],['elevator',.75],['lift',.75],['pump',.8],['fire',1],['server',.85],['\bit\b',.85],['kitchen',.65]];
+function dfFor(name){
+  var n=' '+String(name).toLowerCase()+' ';
+  for(var i=0;i<DF_RULES.length;i++){if(n.indexOf(DF_RULES[i][0].replace(/\t/g,''))>=0)return DF_RULES[i][1];}
+  if(/(^|\s)it(\s|$)/.test(n))return .85;
+  return .8;
+}
+function sizeCable(a){var r=CABLE_TABLE[0];for(var i=0;i<CABLE_TABLE.length;i++){if(a>=CABLE_TABLE[i][0])r=CABLE_TABLE[i];}return r;}
+function ampsFor(dkw,V,ph,pf){var w=dkw*1000;return ph===3?w/(1.732*V*pf):w/(V*pf);}
+function addRow(name,kw){
+  var tb=document.getElementById('e-rows'),tr=document.createElement('tr');
+  tr.innerHTML='<td><input class="nm" value="'+name+'"></td>'+
+    '<td><input class="kw num" type="number" min="0" step="any" value="'+kw+'"></td>'+
+    '<td class="c-df"></td><td class="c-dkw"></td><td class="c-a"></td><td class="c-cab"></td><td class="c-brk"></td>'+
+    '<td><button class="danger" title="Remove">✕</button></td>';
+  tr.querySelector('.danger').onclick=function(){tr.remove();calcElec();};
+  tr.querySelectorAll('input').forEach(function(el){el.addEventListener('input',calcElec);});
+  tb.appendChild(tr);
+  pairSlider(tr.querySelector('.kw'),0,200,1); // dynamic rows get a synced slider too
+}
+function calcElec(){
+  var V=parseFloat(document.getElementById('e-volt').value)||400,
+      ph=parseInt(document.getElementById('e-ph').value)||3,
+      pf=parseFloat(document.getElementById('e-pf').value)||0.85;
+  var tc=0,td=0;
+  document.querySelectorAll('#e-rows tr').forEach(function(tr){
+    var nm=tr.querySelector('.nm').value,kW=parseFloat(tr.querySelector('.kw').value)||0;
+    var df=dfFor(nm),dkw=kW*df,a=ampsFor(dkw,V,ph,pf),s=sizeCable(a);
+    tc+=kW;td+=dkw;
+    tr.querySelector('.c-df').textContent=df.toFixed(2);
+    tr.querySelector('.c-dkw').textContent=dkw.toFixed(2);
+    tr.querySelector('.c-a').textContent=a.toFixed(1);
+    tr.querySelector('.c-cab').textContent=s[1]+' mm²';
+    tr.querySelector('.c-brk').textContent=s[2]+' A';
+  });
+  td=Math.round(td*100)/100;
+  var ti=ampsFor(td,V,ph,pf),m=sizeCable(ti);
+  document.getElementById('elec-out').innerHTML=
+    row('Connected load','<b>'+tc.toFixed(2)+' kW</b>')+
+    row('Demand load','<b>'+td.toFixed(2)+' kW</b>')+
+    row('<span class="hl">Main feeder ('+ph+'ph, '+V+' V, pf '+pf+')</span>','<b>'+ti.toFixed(1)+' A → '+m[1]+' mm² Cu, '+m[2]+' A breaker</b>');
+}
+
+// ---------- Plumbing ----------
+var TANK_FU=[0,5,10,15,20,30,40,50,60,80,100,140,200,300,500,1000,2000],
+    TANK_GPM=[0,5,8,11,14,20,25,29,32,38,43,53,65,85,115,175,280],
+    VALVE_FU=[0,5,10,15,20,30,40,50,60,80,100,140,200,300,500,1000],
+    VALVE_GPM=[0,15,27,34,38,44,48,52,55,60,67,78,92,110,145,210],
+    STD=[15,20,25,32,40,50,65,80,100];
+function interp(x,xs,ys){
+  if(x<=xs[0])return ys[0];
+  if(x>=xs[xs.length-1]){var sl=(ys[ys.length-1]-ys[ys.length-2])/(xs[xs.length-1]-xs[xs.length-2]);return ys[ys.length-1]+sl*(x-xs[xs.length-1]);}
+  for(var i=1;i<xs.length;i++){if(x<=xs[i]){var t=(x-xs[i-1])/(xs[i]-xs[i-1]);return ys[i-1]+t*(ys[i]-ys[i-1]);}}
+  return ys[ys.length-1];
+}
+function calcPlumb(){
+  var fu=num('p-fu',0),sys=document.getElementById('p-sys').value,
+      st=num('p-static',0),L=num('p-len',0);
+  var gpm=sys==='valve'?interp(fu,VALVE_FU,VALVE_GPM):interp(fu,TANK_FU,TANK_GPM);
+  var lps=gpm*0.0630902,q=gpm*0.0000630902;
+  var dReq=q>0?Math.sqrt(4*q/(Math.PI*1.8))*1000:0,dNom=STD[STD.length-1];
+  for(var i=0;i<STD.length;i++){if(STD[i]>=dReq){dNom=STD[i];break;}}
+  var area=Math.PI*Math.pow(dNom/1000,2)/4,vel=area&&q>0?q/area:0;
+  var leq=L*1.3,d=dNom/1000,hf=(q>0&&d>0)?10.67*leq*Math.pow(q,1.852)/(Math.pow(140,1.852)*Math.pow(d,4.87)):0;
+  var H=st+hf+10,pkW=q>0?1000*9.81*q*H/0.65/1000:0;
+  document.getElementById('plumb-out').innerHTML=
+    row('Fixture units','<b>'+fu+' WSFU ('+sys+'-curve)</b>')+
+    row('Demand','<b>'+gpm.toFixed(1)+' GPM · '+lps.toFixed(2)+' L/s</b>')+
+    row('Pipe','<b>req ID '+dReq.toFixed(1)+' mm → '+dNom+' mm, v='+vel.toFixed(2)+' m/s</b>')+
+    row('Pump head','<b>static '+st.toFixed(1)+' + friction '+hf.toFixed(2)+' + residual 10.0 = '+H.toFixed(2)+' m ('+(H*3.28084).toFixed(1)+' ft)</b>')+
+    row('Pump power (~65%)','<b>'+pkW.toFixed(2)+' kW</b>');
+}
+// ---------- Voltage drop ----------
+function calcVD(){
+  var I=num('v-i',0),A=num('v-a',95),L=num('v-len',0),
+      sys=document.getElementById('v-sys').value,
+      V=parseFloat(document.getElementById('v-volt').value)||400,
+      pf=parseFloat(document.getElementById('v-pf').value)||0.85,
+      lim=parseFloat(document.getElementById('v-lim').value)||5;
+  var R=0.0225*L/A,X=0.00008*L,s=Math.sin(Math.acos(Math.min(1,Math.max(-1,pf))));
+  var dv=sys==='1'?2*I*(R*pf+X*s):1.732*I*(R*pf+X*s);
+  var pct=V>0?dv/V*100:0,ok=pct<=lim;
+  document.getElementById('vd-out').innerHTML=
+    row('Cable R / X','<b>R '+R.toFixed(5)+' Ω · X '+X.toFixed(5)+' Ω</b>')+
+    row('Voltage drop','<b>'+dv.toFixed(2)+' V ('+pct.toFixed(2)+'% of '+V+' V)</b>')+
+    row('<span class="hl">Verdict vs '+lim+'% limit</span>','<b class="'+(ok?'pass':'fail')+'">'+(ok?'✓ PASS':'✕ FAIL')+'</b>');
+}
+// ---------- Lighting ----------
+function calcLux(){
+  var L=num('l-L',0),W=num('l-W',0),lux=num('l-lux',0),lm=num('l-lm',3600),
+      uf=parseFloat(document.getElementById('l-uf').value)||0.6,
+      mf=parseFloat(document.getElementById('l-mf').value)||0.8;
+  var area=L*W,den=lm*uf*mf;
+  var N=(area>0&&den>0)?Math.ceil(lux*area/den):0;
+  var act=(area>0&&N>0)?N*den/area:0;
+  var lay='—';
+  if(N>0){var rows=Math.max(1,Math.round(Math.sqrt(N*W/Math.max(L,0.001))));var cols=Math.ceil(N/rows);lay=rows+' rows × '+cols+' cols ('+(rows*cols)+' positions)';}
+  document.getElementById('lux-out').innerHTML=
+    row('Room area','<b>'+area.toFixed(1)+' m²</b>')+
+    row('Luminaires required','<b>'+N+' × '+Math.round(lm)+' lm</b>')+
+    row('Achieved illuminance','<b>'+act.toFixed(1)+' lux</b>')+
+    row('<span class="hl">Suggested layout</span>','<b>'+lay+'</b>');
+}
+// ---------- Ventilation ----------
+function calcVent(){
+  var L=num('n-L',0),W=num('n-W',0),H=num('n-H',0),
+      ach=num('n-ach',0),occ=parseInt(document.getElementById('n-occ').value)||0;
+  var vol=L*W*H,qAch=vol*ach/3600,qP=occ*10/1000;
+  var q=Math.max(qAch,qP),cfm=q*2118.88,byAch=qAch>=qP;
+  var dia=650;for(var i=0;i<DUCT_TABLE.length;i++){if(q<=DUCT_TABLE[i][0]){dia=DUCT_TABLE[i][1];break;}}
+  var area=Math.PI*Math.pow(dia/2000,2),vel=area?q/area:0;
+  document.getElementById('vent-out').innerHTML=
+    row('Room volume','<b>'+vol.toFixed(1)+' m³</b>')+
+    row('ACH airflow','<b>'+qAch.toFixed(3)+' m³/s</b>')+
+    row('Fresh air ('+occ+' × 10 L/s)','<b>'+qP.toFixed(3)+' m³/s</b>')+
+    row('<span class="hl">Design airflow ('+(byAch?'ACH':'occupancy')+' governs)</span>','<b>'+q.toFixed(3)+' m³/s ('+Math.round(cfm)+' CFM)</b>')+
+    row('Supply duct','<b>'+dia+' mm dia @ '+vel.toFixed(1)+' m/s</b>');
+}
+function calcAll(){calcHVAC();calcElec();calcPlumb();calcVD();calcLux();calcVent();}
+['h-area','h-occ','h-light'].forEach(function(id){document.getElementById(id).addEventListener('input',calcHVAC);});
+['e-volt','e-ph','e-pf'].forEach(function(id){document.getElementById(id).addEventListener('input',calcElec);});
+['p-fu','p-sys','p-static','p-len'].forEach(function(id){document.getElementById(id).addEventListener('input',calcPlumb);});
+['v-i','v-a','v-len','v-sys','v-volt','v-pf','v-lim'].forEach(function(id){document.getElementById(id).addEventListener('input',calcVD);});
+['l-L','l-W','l-lux','l-lm','l-uf','l-mf'].forEach(function(id){document.getElementById(id).addEventListener('input',calcLux);});
+['n-L','n-W','n-H','n-ach','n-occ'].forEach(function(id){document.getElementById(id).addEventListener('input',calcVent);});
+document.getElementById('e-add').onclick=function(){addRow('New load',5);calcElec();};
+// ---------- sliders synced to numeric inputs (two-way, clamped, bubble) ----------
+function paintSlider(s){
+  var min=parseFloat(s.min),max=parseFloat(s.max),v=parseFloat(s.value);
+  var p=max>min?Math.max(0,Math.min(100,(v-min)/(max-min)*100)):50;
+  s.style.setProperty('--fill',p+'%');
+}
+function pairSlider(el,mn,mx,st){
+  if(!el||el.type!=='number'||el.parentElement.querySelector('input[type=range].sl'))return null;
+  var s=document.createElement('input');
+  s.type='range';s.className='sl';s.min=mn;s.max=mx;s.step=st;
+  s.value=el.value;s.setAttribute('aria-label',((el.id||'')+' slider'));
+  el.insertAdjacentElement('afterend',s);paintSlider(s);
+  s.addEventListener('input',function(){el.value=s.value;paintSlider(s);el.dispatchEvent(new Event('input',{bubbles:true}));});
+  el.addEventListener('input',function(){
+    var v=parseFloat(el.value);
+    if(!isNaN(v)){s.value=Math.max(mn,Math.min(mx,v));paintSlider(s);} // clamp: slider never goes stale
+  });
+  return s;
+}
+(function(){
+  var CFG={'h-area':[0,500,1],'h-occ':[0,100,1],'h-light':[0,5000,10],
+    'e-volt':[100,480,1],'e-pf':[0.6,1,0.01],
+    'p-fu':[0,2000,1],'p-static':[0,100,0.5],'p-len':[0,500,1],
+    'v-i':[0,500,0.5],'v-a':[1,500,1],'v-len':[0,300,1],'v-volt':[100,480,1],'v-pf':[0.6,1,0.01],'v-lim':[1,10,0.5],
+    'l-L':[1,100,0.5],'l-W':[1,100,0.5],'l-lux':[50,1000,10],'l-lm':[500,20000,100],'l-uf':[0.1,1,0.01],'l-mf':[0.5,1,0.01],
+    'n-L':[1,100,0.5],'n-W':[1,100,0.5],'n-H':[2,6,0.1],'n-ach':[1,20,0.5],'n-occ':[0,200,1]};
+  Object.keys(CFG).forEach(function(id){
+    var el=document.getElementById(id);if(!el)return;
+    pairSlider(el,CFG[id][0],CFG[id][1],CFG[id][2]);
+  });
+})();
+addRow('Lighting',25);addRow('HVAC',60);addRow('Sockets',15);addRow('Elevator',12);addRow('IT',10);
+calcAll();
+// ---------- sticky tabs offset follows real nav height (fixes taps swallowed on wrap) ----------
+(function(){
+  var nav=document.querySelector('nav.top');
+  function setTop(){document.documentElement.style.setProperty('--tabtop',nav.offsetHeight+'px');}
+  setTop();window.addEventListener('resize',setTop);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(setTop);
+})();
+// ---------- hero count-up on load ----------
+(function(){
+  var els=document.querySelectorAll('[data-count]'),t0=null,D=900;
+  function fmt(v,suf){return Math.round(v)+(suf||'');}
+  function frame(t){
+    if(!t0)t0=t;var p=Math.min(1,(t-t0)/D),e=1-Math.pow(1-p,3);
+    els.forEach(function(el){var end=parseFloat(el.getAttribute('data-count'));el.textContent=fmt(end*e,el.getAttribute('data-suffix'));});
+    if(p<1)requestAnimationFrame(frame);
+  }
+  if('requestAnimationFrame' in window)requestAnimationFrame(frame);
+})();
+// ---------- tool tabs / filter (filter-safe with reveal) ----------
+(function(){
+  var btns=document.querySelectorAll('.tabs button');
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    btns.forEach(function(x){x.classList.remove('on');});b.classList.add('on');
+    var f=b.getAttribute('data-f');
+    document.querySelectorAll('main .card').forEach(function(c){
+      var show=(f==='all'||c.getAttribute('data-cat')===f);
+      c.classList.toggle('hide',!show);
+      if(show){c.classList.add('vis');revealObserve(c);} // FIX: shown cards are forced visible + (re)observed
+      else if(window.__revealIO){window.__revealIO.unobserve(c);}
+    });
+  });});
+})();
+// ---------- scroll reveal (hidden cards never stuck at opacity 0) ----------
+var revealObserve=(function(){
+  var cards=document.querySelectorAll('main .card');
+  if(!('IntersectionObserver' in window)){cards.forEach(function(c){c.classList.add('vis');});return function(){};}
+  cards.forEach(function(c){c.classList.add('rv');});
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});},{threshold:0.08});
+  window.__revealIO=io;
+  cards.forEach(function(c){io.observe(c);});
+  return function(c){io.observe(c);};
+})();
+// ---------- sticky nav scrollspy ----------
+(function(){
+  var links=document.querySelectorAll('nav.top .links a');
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  function spy(){
+    var best=null,bestY=Infinity;
+    Object.keys(map).forEach(function(id){
+      var el=document.getElementById(id);if(!el||el.classList.contains('hide'))return;
+      var y=Math.abs(el.getBoundingClientRect().top-140);
+      if(y<bestY){bestY=y;best=id;}
+    });
+    links.forEach(function(a){a.classList.toggle('on',map[best]===a);});
+  }
+  window.addEventListener('scroll',spy,{passive:true});spy();
+})();
+</script>
+</body>
+</html>
