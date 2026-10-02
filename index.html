@@ -3,8 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="MEP Building Services Toolkit — live HVAC, electrical, plumbing, voltage-drop, lighting and ventilation sizing calculators that run 100% in your browser.">
-<title>MEP Building Services Toolkit — Interactive</title>
+<meta name="description" content="Free MEP building-services calculators that run 100% in your browser — HVAC cooling load & duct sizing, electrical load schedule with cable/breaker selection, plumbing demand & pump head, voltage drop, lighting design and ventilation. No install. No signup. Works offline.">
+<meta name="keywords" content="MEP calculator, HVAC load calculator, cable sizing, voltage drop calculator, plumbing fixture units, lighting lux calculator, ventilation ACH, building services engineering">
+<meta name="author" content="Darren Lieu">
+<meta name="theme-color" content="#0b1220">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="MEP Toolkit — 6 Building-Services Calculators, Zero Install">
+<meta property="og:description" content="HVAC · Electrical · Plumbing · Voltage Drop · Lighting · Ventilation. Real engineering formulas, live recalculation, runs offline in your browser.">
+<meta property="og:url" content="https://darthsandd.github.io/mep-toolkit/">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+<title>MEP Toolkit — Free Building-Services Calculators (HVAC, Electrical, Plumbing)</title>
 <style>
 :root{
   --tabtop:60px;
@@ -39,6 +51,21 @@ nav.top .links a:hover,.nav.top .links a.on{color:var(--navy);border-color:var(-
 .tabs button:hover{color:var(--navy);border-color:var(--yellow);box-shadow:0 2px 10px rgba(242,183,5,.25)}
 .tabs button.on{background:var(--yellow);color:#231a00;border-color:var(--yellow);box-shadow:0 4px 14px rgba(242,183,5,.4)}
 /* ---------- hero : navy gradient band + glow (the flair) ---------- */
+header.hero .hero-note{max-width:620px;margin:1.1rem auto 0;font-size:.82rem;color:#b9c8e6;line-height:1.6}
+header.hero .cta-row{flex-wrap:wrap}
+/* ---------- why band ---------- */
+.why{max-width:1180px;margin:0 auto;padding:2.1rem 1.2rem .4rem}
+.why-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.why-item{background:var(--card-solid);border:1px solid var(--line);border-radius:var(--r);
+  padding:1.15rem 1.25rem;box-shadow:0 6px 22px rgba(14,33,64,.06);border-left:4px solid var(--yellow)}
+.why-item h3{font-size:.95rem;color:var(--navy);margin-bottom:.4rem;font-weight:800}
+.why-item p{font-size:.84rem;color:var(--muted);line-height:1.6}
+/* ---------- footer ---------- */
+footer.site{max-width:1180px;margin:2.4rem auto 0;padding:2rem 1.2rem 2.6rem;border-top:1px solid var(--line);text-align:center}
+footer.site p{font-size:.83rem;color:var(--muted);line-height:1.8}
+footer.site a{color:var(--navy2);font-weight:700;text-decoration:none;border-bottom:1px solid var(--yellow-line)}
+footer.site a:hover{color:#c89400}
+footer.site .fnote{font-size:.74rem;color:#8496b0;margin-top:.6rem}
 header.hero{position:relative;overflow:hidden;text-align:center;padding:4rem 1.2rem 3.2rem;color:#eef3ff;
   background:linear-gradient(160deg,#0a1a38 5%,#14305e 52%,#0a1a38 95%);border-bottom:4px solid var(--yellow)}
 header.hero::before{content:"";position:absolute;inset:-40% -20% auto -20%;height:120%;
@@ -162,9 +189,9 @@ footer.site a:hover{text-decoration:underline}
   <button type="button" data-f="light">💡 Light</button>
 </div>
 <header class="hero">
-  <div class="badge">⚙️ Interactive — runs 100% in your browser</div>
+  <div class="badge">⚙️ Interactive — runs 100% in your browser, works offline</div>
   <h1>MEP Building Services <span>Toolkit</span></h1>
-  <p class="sub">HVAC, electrical, plumbing, voltage-drop, lighting &amp; ventilation sizing calculators. Type or slide values — results update live. No installs, works offline.</p>
+  <p class="sub">Six engineering calculators for mechanical, electrical &amp; plumbing design. <b>Type or slide a value — every result recalculates live.</b> Real formulas underneath: Hazen-Williams friction, Hunter-curve fixture units, IEC cable tables, lumen method.</p>
   <div class="chips">
     <span class="chip"><b data-count="6">6</b> live calculators</span>
     <span class="chip"><b data-count="0">0</b> dependencies</span>
@@ -173,8 +200,27 @@ footer.site a:hover{text-decoration:underline}
   <div class="cta-row">
     <a class="cta" href="#hvac-card">Start sizing ↓</a>
     <a class="cta ghost" href="#elec-card">Load schedule</a>
+    <a class="cta ghost" href="https://github.com/DarthSandD/mep-toolkit" target="_blank" rel="noopener">Source ↗</a>
   </div>
+  <p class="hero-note">The Python modules behind these calculators are in the repo — read the exact formula, assumptions and units instead of trusting a black box.</p>
 </header>
+
+<section class="why" aria-label="Why this exists">
+  <div class="why-grid">
+    <div class="why-item">
+      <h3>🔍 Inspectable math</h3>
+      <p>Every calculator ships alongside its Python reference implementation. Read the formula. Check the units. Audit the assumptions.</p>
+    </div>
+    <div class="why-item">
+      <h3>⚡ Live, not submit-and-wait</h3>
+      <p>Results update as you type or drag. No calculate button, no page reload — size a feeder and watch it respond.</p>
+    </div>
+    <div class="why-item">
+      <h3>📴 Works on site</h3>
+      <p>One file, zero dependencies, no network calls. Open it from a laptop or phone in a plant room with no signal.</p>
+    </div>
+  </div>
+</section>
 <main>
 
 <section class="card" id="hvac-card" data-cat="air">
@@ -532,5 +578,14 @@ var revealObserve=(function(){
   window.addEventListener('scroll',spy,{passive:true});spy();
 })();
 </script>
+<footer class="site">
+  <p><b>MEP Toolkit</b> — free building-services calculators, open source.</p>
+  <p>
+    <a href="https://github.com/DarthSandD/mep-toolkit" target="_blank" rel="noopener">GitHub</a> ·
+    <a href="https://darrenlin.pages.dev/" target="_blank" rel="noopener">Portfolio</a> ·
+    <a href="https://www.instagram.com/darren.lin_ai" target="_blank" rel="noopener">@darren.lin_ai</a>
+  </p>
+  <p class="fnote">Rough sizing aid — verify against local code before design use. Built by Darren Lieu.</p>
+</footer>
 </body>
 </html>
