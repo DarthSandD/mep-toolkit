@@ -50,6 +50,51 @@ nav.top .links a:hover,.nav.top .links a.on{color:var(--navy);border-color:var(-
   border:1px solid var(--line);font-weight:700;cursor:pointer}
 .tabs button:hover{color:var(--navy);border-color:var(--yellow);box-shadow:0 2px 10px rgba(242,183,5,.25)}
 .tabs button.on{background:var(--yellow);color:#231a00;border-color:var(--yellow);box-shadow:0 4px 14px rgba(242,183,5,.4)}
+/* ---------- 1. VISIBLE FOCUS on input groups (Astra #1) ---------- */
+.field{position:relative;transition:border-color 140ms ease,box-shadow 140ms ease}
+.field:focus-within{border-color:var(--yellow);box-shadow:0 0 0 3px rgb(242 183 5 / .18)}
+input,select{transition:border-color 140ms ease,box-shadow 140ms ease,background-color 140ms ease}
+/* ---------- 2. TACTILE SLIDERS (Astra #2) ---------- */
+input[type=range]{accent-color:var(--navy)}
+input[type=range]::-webkit-slider-thumb{transition:transform 100ms ease}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.12)}
+input[type=range]::-moz-range-thumb{transition:transform 100ms ease}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.12)}
+/* ---------- 3. RESTRAINED CARD DEPTH (Astra #3) — pointer devices only ---------- */
+@media (hover:hover) and (pointer:fine){
+  .card{transition:transform 180ms ease-out,box-shadow 180ms ease-out,border-color 180ms ease-out}
+  .card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgb(14 33 64 / .12)}
+}
+/* ---------- 4. FILTERS FEEL LIKE CONTROLS (Astra #4) ---------- */
+.tabs button{transition:background-color 140ms ease,color 140ms ease,border-color 140ms ease,box-shadow 140ms ease;
+  min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.tabs button:not(.on):hover{background:rgb(14 33 64 / .08);color:var(--navy)}
+.tabs button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+/* ---------- 5. SHORTER REVEALS (Astra #5) ---------- */
+.rv{opacity:0;transform:translateY(8px);transition:opacity 220ms ease-out,transform 220ms ease-out}
+.rv.vis{opacity:1;transform:translateY(0)}
+/* ---------- CARD HIERARCHY: rhythm without redesign (Astra #3) ---------- */
+main .card:nth-of-type(even){background:#f4f7fb}
+main .card .n{display:inline-block;font-variant-numeric:tabular-nums;font-size:.72rem;font-weight:800;
+  letter-spacing:.09em;color:#8a6a00;background:var(--yellow-soft);border:1px solid var(--yellow-line);
+  border-radius:999px;padding:.12rem .5rem;margin-right:.5rem;vertical-align:middle}
+main .card h2{font-size:22px;line-height:1.25}
+/* results block: alive numbers, tabular so they don't jitter (Astra #2) */
+.results{font-variant-numeric:tabular-nums;border-left:3px solid var(--yellow);min-height:4.2rem}
+.results .val,.results b{font-variant-numeric:tabular-nums}
+.num-tween{transition:none}
+/* formula notes secondary but legible (Astra #3) */
+.formula{font-size:13px;line-height:1.55}
+/* ---------- ACCESSIBILITY: honour reduced motion (Astra, all 5) ---------- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;scroll-behavior:auto !important}
+  .rv{opacity:1 !important;transform:none !important}
+  main .card:hover{transform:none !important}
+  input[type=range]:active::-webkit-slider-thumb{transform:none !important}
+  input[type=range]:active::-moz-range-thumb{transform:none !important}
+  header.hero .glow,.glow{animation:none !important}
+}
 /* ---------- hero : navy gradient band + glow (the flair) ---------- */
 header.hero .hero-note{max-width:620px;margin:1.1rem auto 0;font-size:.82rem;color:#b9c8e6;line-height:1.6}
 header.hero .cta-row{flex-wrap:wrap}
@@ -527,16 +572,88 @@ calcAll();
   setTop();window.addEventListener('resize',setTop);
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(setTop);
 })();
-// ---------- hero count-up on load ----------
+// ---------- Astra #2: retargetable numeric tween for live results ----------
+// Numbers animate from their CURRENT displayed value to the newly computed one,
+// cancelling any in-flight animation. Calculation is always immediate; only the
+// presentation lerps. Engineering values never theatrically start at zero.
 (function(){
-  var els=document.querySelectorAll('[data-count]'),t0=null,D=900;
-  function fmt(v,suf){return Math.round(v)+(suf||'');}
-  function frame(t){
-    if(!t0)t0=t;var p=Math.min(1,(t-t0)/D),e=1-Math.pow(1-p,3);
-    els.forEach(function(el){var end=parseFloat(el.getAttribute('data-count'));el.textContent=fmt(end*e,el.getAttribute('data-suffix'));});
-    if(p<1)requestAnimationFrame(frame);
+  if(!('requestAnimationFrame' in window))return;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Format like the calculators do: preserve decimals, add thousands separators.
+  function fmtNum(v){
+    if(!isFinite(v))return '';
+    var dec=(String(v).split('.')[1]||'').length;
+    if(dec>3)dec=3;
+    return v.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
   }
-  if('requestAnimationFrame' in window)requestAnimationFrame(frame);
+
+  // A number found in a results string. Requires a digit; unit stays untouched.
+  var NUM=/^(\d{1,3}(?:,\d{3})*|\d+)(\.\d+)?$/;
+
+  function tweenText(node,finalText){
+    // Walk direct text nodes; only animate ones that are purely a number.
+    var walker=document.createTreeWalker(node,NodeFilter.SHOW_TEXT,null);
+    var jobs=[],n;
+    while((n=walker.nextNode())){
+      var t=n.nodeValue.trim();
+      var m=t.match(NUM);
+      if(!m)continue;
+      var to=parseFloat(m[1].replace(/,/g,'')+(m[2]||''));
+      var from=parseFloat(n.__cur);
+      if(!isFinite(from))from=to;               // first render: no animation
+      if(Math.abs(to-from)<1e-9){n.__cur=String(to);continue;}
+      n.__end=to;n.__txt=n;n.__start=from;n.__t0=null;
+      jobs.push(n);
+    }
+    if(!jobs.length){node.innerHTML=finalText;return;}
+    node.__jobs=jobs;
+    if(reduce){jobs.forEach(function(j){j.__cur=String(j.__end);});return;}
+    if(node.__raf)cancelAnimationFrame(node.__raf);
+    var D=180;
+    function step(ts){
+      var done=true;
+      node.__jobs.forEach(function(j){
+        if(j.__t0===null)j.__t0=ts;
+        var p=Math.min(1,(ts-j.__t0)/D);
+        var e=1-Math.pow(1-p,3);
+        var v=j.__start+(j.__end-j.__start)*e;
+        j.nodeValue=fmtNum(v);
+        j.__cur=String(j.__end);
+        if(p<1)done=false;
+      });
+      if(!done&&node.isConnected){node.__raf=requestAnimationFrame(step);}
+      else{node.__jobs.forEach(function(j){j.nodeValue=fmtNum(j.__end);});node.__raf=null;}
+    }
+    node.__raf=requestAnimationFrame(step);
+  }
+
+  // Route every results container through the tween.
+  var IDS=['hvac-out','elec-out','plumb-out','vd-out','lux-out','vent-out'];
+  IDS.forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el)return;
+    var target=null,queued=false;
+    var obs=new MutationObserver(function(){
+      if(queued)return;
+      queued=true;
+      requestAnimationFrame(function(){
+        queued=false;
+        var html=el.innerHTML;
+        if(html===target)return;      // decoy write from our own tween
+        target=html;
+        tweenText(el,html);
+      });
+    });
+    obs.observe(el,{childList:true,subtree:true,characterData:true});
+  });
+})();
+// ---------- hero chips: settle to final values immediately (Astra #4) ----------
+// A scroll-triggered count-up makes engineering numbers start at zero. Settle instead.
+(function(){
+  document.querySelectorAll('[data-count]').forEach(function(el){
+    el.textContent=el.getAttribute('data-count')+(el.getAttribute('data-suffix')||'');
+  });
 })();
 // ---------- tool tabs / filter (filter-safe with reveal) ----------
 (function(){
